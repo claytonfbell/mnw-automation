@@ -1,11 +1,8 @@
-import { hot } from 'react-hot-loader/root';
-import * as React from 'react';
+import "github-markdown-css/github-markdown.css"
+import * as React from "react"
+import { hot } from "react-hot-loader/root"
+import Layout from "./Layout"
 
+const Application = () => <Layout />
 
-const Application = () => (
-    <div>
-        Hello World from Electron!
-    </div>
-);
-
-export default hot(Application);
+export default hot(Application)

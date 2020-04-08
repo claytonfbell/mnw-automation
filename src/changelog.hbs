@@ -1,0 +1,24 @@
+### Changelog
+
+{{#each releases}}
+    #### {{title}}
+
+  {{#if tag}}
+    > {{niceDate}}
+  {{/if}}
+
+  {{#if summary}}
+    {{summary}}
+  {{/if}}
+
+  {{#each merges}}
+    - {{message}}{{#if href}} `#{{id}}`{{/if}}
+  {{/each}}
+  {{#each fixes}}
+    - {{commit.subject}}{{#each fixes}}{{#if href}} `#{{id}}`{{/if}}{{/each}}
+  {{/each}}
+  {{#each commits}}
+    - {{#if breaking}}**Breaking change:** {{/if}}{{subject}}{{#if href}} `{{shorthash}}`{{/if}}
+  {{/each}}
+
+{{/each}}
