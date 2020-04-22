@@ -68,7 +68,13 @@ const createMenu = () => {
     Menu.buildFromTemplate([
       {
         label: "Edit",
-        submenu: [{ role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "quit" }],
+        submenu: [
+          { role: "selectAll" },
+          { role: "cut" },
+          { role: "copy" },
+          { role: "paste" },
+          { role: "quit" },
+        ],
       },
     ])
   )
