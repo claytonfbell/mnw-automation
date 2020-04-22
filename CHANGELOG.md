@@ -1,8 +1,17 @@
 ### Changelog
 
-#### v1.0.1
+#### v1.0.2
 
 > 22 April 2020
+
+#### v1.0.2
+
+> 22 April 2020
+
+- Added component to generate Populi API Key `b746a4f`
+- changelog `361cfcf`
+- Enable selct-all `2261cff`
+- README `1a92f42`
 
 #### v1.0.1
 
