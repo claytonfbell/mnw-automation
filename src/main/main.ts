@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, Menu } from "electron"
 import * as path from "path"
 import * as url from "url"
 
@@ -46,7 +46,10 @@ const createWindow = async () => {
   })
 }
 
-app.on("ready", createWindow)
+app.on("ready", () => {
+  createWindow()
+  createMenu()
+})
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -59,3 +62,14 @@ app.on("activate", () => {
     createWindow()
   }
 })
+
+const createMenu = () => {
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      {
+        label: "Edit",
+        submenu: [{ role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "quit" }],
+      },
+    ])
+  )
+}

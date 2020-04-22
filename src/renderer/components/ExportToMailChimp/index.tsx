@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 /* eslint-disable react/jsx-closing-bracket-location */
-import { Box, Grid, Typography } from "@material-ui/core"
+import { Box, Grid, Tooltip, Typography } from "@material-ui/core"
 import * as axios from "axios"
 import { DateTimePicker, Form, SubmitButton, TextField, useStoredState } from "material-ui-pack"
 import * as md5 from "md5"
@@ -289,11 +289,9 @@ function ExportToMailChimp() {
             <DateTimePicker name="startTime" label="Query Updates After" />
           </Grid>
           <Grid item xs={3}>
-            <TextField
-              name="offset"
-              label="Query Offset"
-              formatter={v => v.replace(/[^0-9]/g, "")}
-            />
+            <Tooltip title="Leave as 0 if unsure" arrow>
+              <TextField name="offset" label="Skip" formatter={v => v.replace(/[^0-9]/g, "")} />
+            </Tooltip>
           </Grid>
         </Grid>
 

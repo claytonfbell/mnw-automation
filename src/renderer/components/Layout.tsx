@@ -34,7 +34,7 @@ function Layout() {
       <CssBaseline />
       <AppBar>
         <Tabs value={selected} onChange={(e, i) => setSelected(i)}>
-          <Tab value="exportToMailchimp" label="Export to MailChimp" />
+          <Tab value="exportToMailchimp" label="MailChimp" />
           <Tab value="changelog" label="Changelog" />
         </Tabs>
       </AppBar>
