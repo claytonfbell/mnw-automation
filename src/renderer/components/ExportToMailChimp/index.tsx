@@ -9,14 +9,15 @@ import * as moment from "moment"
 import * as querystring from "querystring"
 import * as React from "react"
 import * as ReactMarkdown from "react-markdown"
-import { parseString } from "xml2js"
 import Spacer from "../Spacer"
+import CreatePopuliApiKey from "./CreatePopuliApiKey"
 import { MailChimpMember } from "./models/MailChimpMember"
 import { MailChimpMergeFields } from "./models/MailChimpMergeFields"
 import { MailChimpTag } from "./models/MailChimpTag"
 import { Email, GetPersonResponse, PopuliTag } from "./models/populi/GetPersonResponse"
 import { GetUpdatedPeopleResponse, UpdatedPerson } from "./models/populi/GetUpdatedPeopleResponse"
 import Progress from "./Progress"
+import { xml2json } from "./xml2Json"
 
 interface LogMessage {
   id: number
@@ -52,17 +53,6 @@ function ExportToMailChimp() {
     // eslint-disable-next-line no-console
     console.log(message)
     setLogMessages(lm => [...lm, { id: getMessageId(), message }])
-  }
-
-  // async wrapper
-  // https://github.com/Leonidas-from-XIV/node-xml2js/issues/159
-  const xml2json = async (xml: string) => {
-    return new Promise((resolve, reject) => {
-      parseString(xml, { explicitArray: false }, (err, json) => {
-        if (err) reject(err)
-        else resolve(json)
-      })
-    })
   }
 
   const handleSubmit = async () => {
@@ -257,15 +247,27 @@ function ExportToMailChimp() {
       setProgress(0)
       setState((s: FormState) => ({ ...s, startTime }))
     } catch (e) {
+      setIsBusy(false)
       log("# ERROR")
       log(e.message)
     }
   }
+
+  const handleCreatedPopuliApiKey = (populiApiKey: string) => {
+    log("New API Key generated")
+    setState((s: FormState) => ({ ...s, populiApiKey }))
+  }
+
   return (
     <>
       <Typography variant="h4" color="secondary">
         Export From Populi To MailChimp
       </Typography>
+      <Spacer />
+      <CreatePopuliApiKey
+        disabled={state.populiApiKey.length > 0}
+        onCreated={handleCreatedPopuliApiKey}
+      />
       <Spacer />
       <Form
         debug={false}
