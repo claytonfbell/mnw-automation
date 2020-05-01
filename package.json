@@ -56,7 +56,10 @@
     "productName": "Montessori Northwest Automation",
     "appId": "org.montessori-nw.automation",
     "mac": {
-      "category": "your.app.category.type"
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "directories": {
       "output": "release"
@@ -71,6 +74,10 @@
     },
     "win": {
       "target": "nsis"
+    },
+    "afterSign": "scripts/notarize.js",
+    "dmg": {
+      "sign": false
     }
   },
   "repository": {
@@ -146,6 +153,7 @@
     "@types/xml2js": "^0.4.5",
     "auto-changelog": "^2.0.0",
     "axios": "^0.19.2",
+    "electron-notarize": "^0.3.0",
     "github-markdown-css": "^4.0.0",
     "material-ui-pack": "^0.2.8",
     "md5": "^2.2.1",
