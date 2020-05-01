@@ -82,7 +82,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:Robinfr/electron-react-typescript.git"
+    "url": "https://github.com/claytonfbell/mnw-automation"
   },
   "author": {
     "name": "Clayton Bell",
@@ -90,9 +90,9 @@
   },
   "license": "SEE LICENSE",
   "bugs": {
-    "url": "https://github.com/Robinfr/electron-react-typescript/issues"
+    "url": "https://github.com/claytonfbell/mnw-automation/issues"
   },
-  "homepage": "https://github.com/Robinfr/electron-react-typescript",
+  "homepage": "https://github.com/claytonfbell/mnw-automation",
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
@@ -162,6 +162,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-markdown": "^4.3.1",
+    "update-electron-app": "^1.5.0",
     "xml2js": "^0.4.23"
   }
 }
