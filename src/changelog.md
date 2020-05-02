@@ -1,8 +1,16 @@
 ### Changelog
 
-#### v1.0.2
+#### v1.0.3
 
-> 22 April 2020
+> 2 May 2020
+
+#### v1.0.3
+
+> 2 May 2020
+
+- Added update-electron-app `3b137dd`
+- Added code signing for mac builds `671e674`
+- changelog `b277524`
 
 #### v1.0.2
 
