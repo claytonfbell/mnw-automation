@@ -2,7 +2,9 @@ import { app, BrowserWindow, Menu } from "electron"
 import * as path from "path"
 import * as url from "url"
 
-require("update-electron-app")()
+if (process.env.NODE_ENV === "production") {
+  require("update-electron-app")()
+}
 
 let win: BrowserWindow | null
 

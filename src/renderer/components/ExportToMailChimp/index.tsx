@@ -210,9 +210,12 @@ function ExportToMailChimp() {
                 }
 
                 // update tags
+                // eslint-disable-next-line no-nested-ternary
                 const populiTags: PopuliTag[] = Array.isArray(person.tags.tag)
                   ? person.tags.tag
-                  : [person.tags.tag]
+                  : person.tags.tag !== undefined
+                  ? [person.tags.tag]
+                  : []
 
                 const tags: MailChimpTag[] = []
                 populiTags.forEach(x => {
