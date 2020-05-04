@@ -1,8 +1,15 @@
 ### Changelog
 
-#### v1.0.4
+#### v1.0.5
 
-> 2 May 2020
+> 4 May 2020
+
+#### v1.0.5
+
+> 4 May 2020
+
+- changelog `e64863f`
+- Fixed bug with undefined tags from populi `bd50b81`
 
 #### v1.0.4
 
