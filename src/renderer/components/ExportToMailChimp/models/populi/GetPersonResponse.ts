@@ -12,7 +12,7 @@ export interface Person {
   timezone: string
   timezone_name: string
   email: Email | Email[]
-  address: Address[]
+  address?: Address | Address[]
   phone: Phone[]
   gender: string
   tags: PopuliTags
@@ -26,7 +26,7 @@ export interface Email {
   no_mailings: boolean
 }
 
-interface Address {
+export interface Address {
   addressid: number
   type: string
   street: string

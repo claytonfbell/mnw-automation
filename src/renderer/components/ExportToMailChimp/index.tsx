@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 /* eslint-disable react/jsx-closing-bracket-location */
@@ -14,8 +15,16 @@ import CreatePopuliApiKey from "./CreatePopuliApiKey"
 import { MailChimpMember } from "./models/MailChimpMember"
 import { MailChimpMergeFields } from "./models/MailChimpMergeFields"
 import { MailChimpTag } from "./models/MailChimpTag"
-import { Email, GetPersonResponse, PopuliTag } from "./models/populi/GetPersonResponse"
+import { AddTagResponse } from "./models/populi/AddTagResponse"
+import {
+  Address,
+  Email,
+  GetPersonResponse,
+  Person,
+  PopuliTag,
+} from "./models/populi/GetPersonResponse"
 import { GetUpdatedPeopleResponse, UpdatedPerson } from "./models/populi/GetUpdatedPeopleResponse"
+import { populiRegionTags } from "./populiRegionTags"
 import Progress from "./Progress"
 import { xml2json } from "./xml2Json"
 
@@ -48,11 +57,216 @@ function ExportToMailChimp() {
 
   const [progress, setProgress] = React.useState<number>(0)
 
+  // LOGGING OUTPUT
   const [logMessages, setLogMessages] = React.useState<LogMessage[]>([])
   const log = (message: string) => {
     // eslint-disable-next-line no-console
     console.log(message)
     setLogMessages(lm => [...lm, { id: getMessageId(), message }])
+  }
+
+  // POPULI UPDATES
+  const processPopuliPerson = async (personId: number, person: Person) => {
+    const addresses: Address[] = Array.isArray(person.address)
+      ? person.address
+      : person.address === undefined
+      ? []
+      : [person.address]
+
+    // get unique list of states
+    const states = Array.from(
+      new Set(
+        addresses.map(adr => adr.state).filter(x => x !== undefined && x !== null && x !== "")
+      )
+    )
+
+    // get unique list of countries
+    const countries = Array.from(
+      new Set(
+        addresses.map(adr => adr.country).filter(x => x !== undefined && x !== null && x !== "")
+      )
+    )
+
+    // get uniqe zip codes
+    const zips = Array.from(
+      new Set(addresses.map(adr => adr.zip).filter(x => x !== undefined && x !== null && x !== ""))
+    )
+
+    const regionTagNames: string[] = []
+    populiRegionTags.forEach(prt => {
+      // tag from zip
+      if (
+        prt.zips !== undefined &&
+        prt.zips.filter(value => zips.indexOf(String(value)) > 0).length > 0
+      ) {
+        regionTagNames.push(prt.tag)
+      }
+      // tag from countries
+      if (prt.testCountries !== undefined && prt.testCountries(countries)) {
+        regionTagNames.push(prt.tag)
+      }
+      // tag from states
+      if (
+        prt.states !== undefined &&
+        prt.states.filter(value => states.indexOf(value) > 0).length > 0
+      ) {
+        regionTagNames.push(prt.tag)
+      }
+    })
+
+    const populiTags: PopuliTag[] = Array.isArray(person.tags.tag)
+      ? person.tags.tag
+      : person.tags.tag !== undefined
+      ? [person.tags.tag]
+      : []
+
+    const addTags: string[] = regionTagNames.filter(
+      x => populiTags.filter(y => y.name === x).length === 0
+    )
+
+    // TODO create removeTags array to cleanup incorrect regions
+
+    if (addTags.length > 0) {
+      log(
+        `Applying Populi tags to \`${person.first} ${person.last}\`: ${addTags
+          .map(x => `\`${x}\``)
+          .join(", ")}`
+      )
+
+      for (let i = 0; i < addTags.length; i++) {
+        const response = await axios.default
+          .post(
+            `https://montessorinorthwest.populiweb.com/api/`,
+            querystring.stringify({
+              task: "addTag",
+              person_id: personId,
+              tag: addTags[i],
+            }),
+            {
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                Authorization: state.populiApiKey,
+              },
+            }
+          )
+          .then(resp => {
+            return xml2json(resp.data) as Promise<AddTagResponse>
+          })
+      }
+    }
+  }
+
+  // MAILCHIMP ADD / UPDATE
+  const processMailChimpPerson = async (person: Person) => {
+    // log(`processMailChimpPerson ${JSON.stringify(person)}`)
+
+    const mailChimpAuth = {
+      auth: {
+        username: "any",
+        password: state.mailChimpApiKey,
+      },
+    }
+
+    const emails: Email[] = Array.isArray(person.email)
+      ? person.email
+      : person.email !== undefined
+      ? [person.email]
+      : []
+
+    for (let j = 0; j < emails.length; j++) {
+      // LOOKUP IN MAILCHIMP
+      let mcMember = await axios.default
+        .get(
+          `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${md5(
+            emails[j].address.toLowerCase()
+          )}`,
+          mailChimpAuth
+        )
+        .then(resp => {
+          return resp.data as Promise<MailChimpMember>
+        })
+        .catch((err: axios.AxiosError) => {
+          if (err.response?.status === 404) {
+            return null
+          }
+          throw err
+        })
+
+      // CREATE NEW MAILCHIMP MEMBER
+      if (mcMember === null && emails[j].no_mailings !== true) {
+        log(`Adding missing email \`${emails[j].address}\` to MailChimp...`)
+        mcMember = await axios.default
+          .post(
+            `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members`,
+            {
+              email_address: emails[j].address,
+              status: "subscribed",
+            },
+            mailChimpAuth
+          )
+          .then(resp => {
+            return resp.data as Promise<MailChimpMember>
+          })
+      }
+
+      // now lets make sure mcMember data is up2dat2
+      if (mcMember !== null) {
+        let doUpdate = false
+        const merge_fields: MailChimpMergeFields = {
+          FNAME: "",
+          LNAME: "",
+        }
+        // update first/last name
+        if (person.first !== mcMember.merge_fields.FNAME) {
+          merge_fields.FNAME = person.first
+          doUpdate = true
+        }
+        if (person.last !== mcMember.merge_fields.LNAME) {
+          merge_fields.LNAME = person.last
+          doUpdate = true
+        }
+        if (doUpdate) {
+          log(
+            `Updating name from \`${mcMember.merge_fields.FNAME} ${mcMember.merge_fields.LNAME}\` to  \`${merge_fields.FNAME} ${merge_fields.LNAME}\``
+          )
+          mcMember = await axios.default
+            .patch(
+              `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${mcMember.id}`,
+              { merge_fields },
+              mailChimpAuth
+            )
+            .then(resp => {
+              return resp.data as Promise<MailChimpMember>
+            })
+        }
+
+        // update tags
+        const populiTags: PopuliTag[] = Array.isArray(person.tags.tag)
+          ? person.tags.tag
+          : person.tags.tag !== undefined
+          ? [person.tags.tag]
+          : []
+
+        const tags: MailChimpTag[] = []
+        populiTags.forEach(x => {
+          if (mcMember?.tags.find(y => y.name === x.name) === undefined) {
+            tags.push({ name: x.name, status: "active" })
+          }
+        })
+        if (tags.length > 0 && mcMember !== null) {
+          log(
+            `Applying tags to \`${mcMember?.email_address}\`: ${tags
+              .map(x => `\`${x.name}\``)
+              .join(", ")}`
+          )
+          const r = await axios.default.post(
+            `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${mcMember.id}/tags`,
+            { tags },
+            mailChimpAuth
+          )
+        }
+      }
+    }
   }
 
   const handleSubmit = async () => {
@@ -65,12 +279,6 @@ function ExportToMailChimp() {
 
       let keepGoing = true
       let offset = Number(state.offset)
-      const mailChimpAuth = {
-        auth: {
-          username: "any",
-          password: state.mailChimpApiKey,
-        },
-      }
       let peopleCount = 0
 
       while (keepGoing) {
@@ -141,102 +349,12 @@ function ExportToMailChimp() {
 
             // LOOP EACH EMAIL ADDRESS
             const { response: person } = personResponse
-            const emails: Email[] = Array.isArray(person.email) ? person.email : [person.email]
-            for (let j = 0; j < emails.length; j++) {
-              // LOOKUP IN MAILCHIMP
-              let mcMember = await axios.default
-                .get(
-                  `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${md5(
-                    emails[j].address.toLowerCase()
-                  )}`,
-                  mailChimpAuth
-                )
-                .then(resp => {
-                  return resp.data as Promise<MailChimpMember>
-                })
-                .catch((err: axios.AxiosError) => {
-                  if (err.response?.status === 404) {
-                    return null
-                  }
-                  throw err
-                })
 
-              // CREATE NEW MAILCHIMP MEMBER
-              if (mcMember === null && emails[j].no_mailings !== true) {
-                log(`Adding missing email \`${emails[j].address}\` to MailChimp...`)
-                mcMember = await axios.default
-                  .post(
-                    `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members`,
-                    {
-                      email_address: emails[j].address,
-                      status: "subscribed",
-                    },
-                    mailChimpAuth
-                  )
-                  .then(resp => {
-                    return resp.data as Promise<MailChimpMember>
-                  })
-              }
+            // UPDATE RECORD IN POPULI IF NEEDED
+            await processPopuliPerson(p.id, person)
 
-              // now lets make sure mcMember data is up2dat2
-              if (mcMember !== null) {
-                let doUpdate = false
-                const merge_fields: MailChimpMergeFields = {
-                  FNAME: "",
-                  LNAME: "",
-                }
-                // update first/last name
-                if (person.first !== mcMember.merge_fields.FNAME) {
-                  merge_fields.FNAME = person.first
-                  doUpdate = true
-                }
-                if (person.last !== mcMember.merge_fields.LNAME) {
-                  merge_fields.LNAME = person.last
-                  doUpdate = true
-                }
-                if (doUpdate) {
-                  log(
-                    `Updating name from \`${mcMember.merge_fields.FNAME} ${mcMember.merge_fields.LNAME}\` to  \`${merge_fields.FNAME} ${merge_fields.LNAME}\``
-                  )
-                  mcMember = await axios.default
-                    .patch(
-                      `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${mcMember.id}`,
-                      { merge_fields },
-                      mailChimpAuth
-                    )
-                    .then(resp => {
-                      return resp.data as Promise<MailChimpMember>
-                    })
-                }
-
-                // update tags
-                // eslint-disable-next-line no-nested-ternary
-                const populiTags: PopuliTag[] = Array.isArray(person.tags.tag)
-                  ? person.tags.tag
-                  : person.tags.tag !== undefined
-                  ? [person.tags.tag]
-                  : []
-
-                const tags: MailChimpTag[] = []
-                populiTags.forEach(x => {
-                  if (mcMember?.tags.find(y => y.name === x.name) === undefined) {
-                    tags.push({ name: x.name, status: "active" })
-                  }
-                })
-                if (tags.length > 0 && mcMember !== null) {
-                  log(
-                    `Applying tags to \`${mcMember?.email_address}\`: ${tags
-                      .map(x => x.name)
-                      .join(", ")}`
-                  )
-                  const r = await axios.default.post(
-                    `https://us7.api.mailchimp.com/3.0/lists/${state.mailChimpListId}/members/${mcMember.id}/tags`,
-                    { tags },
-                    mailChimpAuth
-                  )
-                }
-              }
-            }
+            // MAILCHIMP
+            await processMailChimpPerson(person)
           }
           offset += updatedPeople.length
           keepGoing = updatedPeople.length > 0
