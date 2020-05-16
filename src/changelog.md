@@ -1,8 +1,15 @@
 ### Changelog
 
-#### v1.0.5
+#### v1.1.0
 
-> 4 May 2020
+> 16 May 2020
+
+#### v1.1.0
+
+> 16 May 2020
+
+- Added Region Tags to Populi `4093a44`
+- changelog `ccab237`
 
 #### v1.0.5
 
