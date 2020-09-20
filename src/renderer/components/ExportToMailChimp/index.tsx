@@ -12,6 +12,7 @@ import * as React from "react"
 import * as ReactMarkdown from "react-markdown"
 import Spacer from "../Spacer"
 import CreatePopuliApiKey from "./CreatePopuliApiKey"
+import { MailChimpCreateMemberError } from "./models/MailChimpCreateMemberError"
 import { MailChimpMember } from "./models/MailChimpMember"
 import { MailChimpMergeFields } from "./models/MailChimpMergeFields"
 import { MailChimpTag } from "./models/MailChimpTag"
@@ -207,6 +208,10 @@ function ExportToMailChimp() {
           .then(resp => {
             return resp.data as Promise<MailChimpMember>
           })
+          .catch((e: axios.AxiosError) => {
+            const err: MailChimpCreateMemberError = e.response?.data
+            throw Error(`**${err.title}** - ${err.detail} You submitted \`${emails[j].address}\``)
+          })
       }
 
       // now lets make sure mcMember data is up2dat2
@@ -359,7 +364,12 @@ function ExportToMailChimp() {
             await processPopuliPerson(p.id, person)
 
             // MAILCHIMP
-            await processMailChimpPerson(person)
+            try {
+              await processMailChimpPerson(person)
+            } catch (err) {
+              log(err.message)
+              log(`**Skipping over error...**`)
+            }
           }
           offset += updatedPeople.length
           keepGoing = updatedPeople.length > 0
