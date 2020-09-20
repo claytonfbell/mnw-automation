@@ -313,7 +313,11 @@ function ExportToMailChimp() {
           })
           .catch((e: axios.AxiosError) => {
             throw Error(
-              `Failed **Populi** API request \`getUpdatedPeople\` with status \`${e.response?.statusText}\``
+              `Failed **Populi** API request \`getUpdatedPeople\` with status \`${e.response
+                ?.statusText ||
+                e.response?.status ||
+                e.message ||
+                "unknown"}\``
             )
           })
 

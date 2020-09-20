@@ -2,6 +2,10 @@ import { app, BrowserWindow, Menu } from "electron"
 import * as path from "path"
 import * as url from "url"
 
+// https://github.com/electron/electron/issues/23664
+// bug work-around with disabling CORS errors
+app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors")
+
 if (process.env.NODE_ENV === "production") {
   require("update-electron-app")()
 }
@@ -23,7 +27,11 @@ const createWindow = async () => {
     await installExtensions()
   }
 
-  win = new BrowserWindow({ width: 800, height: 600, webPreferences: { webSecurity: false } })
+  win = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: { webSecurity: false, nodeIntegration: true },
+  })
 
   if (process.env.NODE_ENV !== "production") {
     process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "1" // eslint-disable-line require-atomic-updates
