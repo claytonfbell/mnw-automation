@@ -1,8 +1,16 @@
 ### Changelog
 
-#### v1.1.0
+#### v1.1.1
 
-> 16 May 2020
+> 20 September 2020
+
+#### v1.1.1
+
+> 20 September 2020
+
+- changelog `0fb3ccb`
+- Improved error handling, skip over errors `aeef491`
+- User friendly error message `502ad85`
 
 #### v1.1.0
 
