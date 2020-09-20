@@ -1,8 +1,15 @@
 ### Changelog
 
-#### v1.1.1
+#### v1.1.2
 
 > 20 September 2020
+
+#### v1.1.2
+
+> 20 September 2020
+
+- Upgraded electron libraries `9c96e14`
+- changelog `dbdc326`
 
 #### v1.1.1
 
