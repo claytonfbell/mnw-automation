@@ -306,6 +306,11 @@ function ExportToMailChimp() {
           .then(resp => {
             return xml2json(resp.data) as Promise<GetUpdatedPeopleResponse>
           })
+          .catch((e: axios.AxiosError) => {
+            throw Error(
+              `Failed **Populi** API request \`getUpdatedPeople\` with status \`${e.response?.statusText}\``
+            )
+          })
 
         let updatedPeople: UpdatedPerson[] = []
         if (response.response.person !== undefined) {
